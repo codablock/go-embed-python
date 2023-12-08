@@ -4,21 +4,40 @@ on:
   push:
     branches:
       - 'main'
+  pull_request:
+    branches:
+      - 'main'
 
 env:
   PYTHON_STANDALONE_VERSIONS: |
-    - "20231002"
+    [
+      "20231002"
+    ]
   PYTHON_VERSIONS: |
-    - "3.10.13"
-    - "3.11.6"
-    - "3.12.0"
+    [
+      "3.10.13",
+      "3.11.6",
+      "3.12.0"
+    ]
 
 jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      PYTHON_STANDALONE_VERSIONS: ${{ env.PYTHON_STANDALONE_VERSIONS }}
+      PYTHON_VERSIONS: ${{ env.PYTHON_VERSIONS }}
+    steps:
+      - name: noop
+        run: |
+          echo noop
+
   build-tag:
+    needs:
+      - build-matrix
     strategy:
       matrix:
-        pythonStandaloneVersion: ${{ fromJSON(env.PYTHON_STANDALONE_VERSIONS) }}
-        pythonVersion: ${{ fromJSON(env.PYTHON_VERSIONS) }}
+        pythonStandaloneVersion: ${{ fromJSON(needs.build-matrix.outputs.PYTHON_STANDALONE_VERSIONS) }}
+        pythonVersion: ${{ fromJSON(needs.build-matrix.outputs.PYTHON_VERSIONS) }}
       fail-fast: false
     runs-on: ubuntu-20.04
     steps:
@@ -50,6 +69,7 @@ jobs:
 
   tests:
     needs:
+      - build-matrix
       - build-tag
     strategy:
       matrix:
@@ -57,8 +77,8 @@ jobs:
           - ubuntu-20.04
           - macos-11
           - windows-2019
-        pythonStandaloneVersion: ${{ fromJSON(env.PYTHON_STANDALONE_VERSIONS) }}
-        pythonVersion: ${{ fromJSON(env.PYTHON_VERSIONS) }}
+        pythonStandaloneVersion: ${{ fromJSON(needs.build-matrix.outputs.PYTHON_STANDALONE_VERSIONS) }}
+        pythonVersion: ${{ fromJSON(needs.build-matrix.outputs.PYTHON_VERSIONS) }}
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -88,14 +108,17 @@ jobs:
 
   release:
     needs:
+      - build-matrix
       - tests
     strategy:
       matrix:
-        pythonStandaloneVersion: ${{ fromJSON(env.PYTHON_STANDALONE_VERSIONS) }}
-        pythonVersion: ${{ fromJSON(env.PYTHON_VERSIONS) }}
+        pythonStandaloneVersion: ${{ fromJSON(needs.build-matrix.outputs.PYTHON_STANDALONE_VERSIONS) }}
+        pythonVersion: ${{ fromJSON(needs.build-matrix.outputs.PYTHON_VERSIONS) }}
       fail-fast: false
     runs-on: ubuntu-20.04
-    if: ${{ github.event_name == 'push' && github.ref_name == "main" }}
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -103,6 +126,7 @@ jobs:
       - name: update remote url
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+          git remote -v
       - name: push tag
         run: |
           git push origin v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
