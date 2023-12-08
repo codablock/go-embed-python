@@ -67,11 +67,12 @@ jobs:
       - name: git gc
         run: |
           git gc
+          ls -lah
       - uses: actions/upload-artifact@v3
         with:
           name: workdir-${{ matrix.pythonStandaloneVersion }} ${{ matrix.pythonVersion }}
           path: |
-            ./.git
+            .git
             build-num
 
   tests:
@@ -107,6 +108,7 @@ jobs:
       - name: checkout tag
         shell: bash
         run: |
+          ls -lah
           git checkout v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
       - name: run tests
         shell: bash
