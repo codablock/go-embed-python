@@ -109,6 +109,7 @@ jobs:
         shell: bash
         run: |
           ls -lah
+          ls -lah .git
           git checkout v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
       - name: run tests
         shell: bash
