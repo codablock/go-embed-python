@@ -15,9 +15,7 @@ env:
     ]
   PYTHON_VERSIONS: |
     [
-      "3.10.13",
-      "3.11.6",
-      "3.12.0"
+      "3.10.13"
     ]
 
 jobs:
@@ -41,10 +39,12 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+      - name: checkout
+        run: |
+          # can't use actions/checkout here as transferring the shallow clone fails when using upload-/download-artifact
+          git clone https://token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY . --depth=1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -67,7 +67,6 @@ jobs:
       - name: git gc
         run: |
           git gc
-          ls -lah
       - uses: actions/upload-artifact@v3
         with:
           name: workdir-${{ matrix.pythonStandaloneVersion }} ${{ matrix.pythonVersion }}
@@ -108,8 +107,6 @@ jobs:
       - name: checkout tag
         shell: bash
         run: |
-          ls -lah
-          ls -lah .git
           git checkout v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
       - name: run tests
         shell: bash
