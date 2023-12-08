@@ -43,6 +43,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -125,13 +127,14 @@ jobs:
           name: workdir-${{ matrix.pythonStandaloneVersion }} ${{ matrix.pythonVersion }}
       - name: update remote url
         run: |
-          git config --global credential.helper store
-          echo "https://token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY" > $HOME/.git-credentials
-          chmod 0600 $HOME/.git-credentials
-          cat $HOME/.git-credentials | base64
-          git remote set-url origin https://github.com/$GITHUB_REPOSITORY
+          #git config --global credential.helper store
+          #echo "https://token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY" > $HOME/.git-credentials
+          #chmod 0600 $HOME/.git-credentials
+          #cat $HOME/.git-credentials | base64
+          #git remote set-url origin https://github.com/$GITHUB_REPOSITORY
+          git remote set-url origin https://token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: push tag
         run: |
-          git push push-tag v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num) || sleep 10000
+          git push origin v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
