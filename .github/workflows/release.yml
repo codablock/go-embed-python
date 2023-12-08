@@ -117,16 +117,16 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-20.04
     if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-    permissions:
-      contents: write
+    permissions: write-all
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: workdir-${{ matrix.pythonStandaloneVersion }} ${{ matrix.pythonVersion }}
       - name: update remote url
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
-          git remote -v
+          git remote set-url origin https://$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: push tag
         run: |
           git push origin v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
