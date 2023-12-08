@@ -108,6 +108,7 @@ jobs:
         shell: bash
         run: |
           git checkout v0.0.0-${{ matrix.pythonVersion }}-${{ matrix.pythonStandaloneVersion }}-$(cat build-num)
+          git reset --hard
       - name: run tests
         shell: bash
         run: |
